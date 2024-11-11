@@ -258,7 +258,7 @@
         }
 
         .send-button:disabled {
-            background: #E9E9EB;
+            /*background: #E9E9EB;*/
             cursor: not-allowed;
         }
 
@@ -305,6 +305,14 @@
         @keyframes typing-bounce {
             0%, 80%, 100% { transform: translateY(0); }
             40% { transform: translateY(-8px); }
+        }
+
+        .typing-dot:nth-child(2) { 
+            animation-delay: 0.2s; 
+        }
+
+        .typing-dot:nth-child(3) { 
+            animation-delay: 0.4s; 
         }
 
         /* Dark mode styles */
@@ -390,15 +398,6 @@
         .chat-widget-popup .chat-suggestions + .chat-messages {
             height: calc(100% - 220px); /* Adjusted to account for suggestions */
         }
-
-        /* Typing indicator dot delays */
-        .typing-dot:nth-child(2) { 
-            animation-delay: 0.2s; 
-        }
-        
-        .typing-dot:nth-child(3) { 
-            animation-delay: 0.4s; 
-        }
     `;
 
     class ChatWidget {
@@ -470,7 +469,7 @@
                 assistant_id: config.assistant_id || null
             };
             // console.log("config4:", this.config);
-            this.threadId = null;
+            this.thread_id = null;
         }
 
         injectStyles() {
@@ -592,6 +591,15 @@
             this.elements.input.value = '';
             this.elements.sendButton.disabled = true;
 
+            // Clear suggestions
+            const suggestionsContainer = document.querySelector('.chat-suggestions');
+            const suggestionsTitle = document.querySelector('.suggestions-title');
+            if (suggestionsContainer) suggestionsContainer.remove();
+            if (suggestionsTitle) suggestionsTitle.remove();
+
+            // Show typing indicator
+            this.showTypingIndicator();
+
             try {
                 const response = await fetch(this.config.endpoint, {
                     method: 'POST',
@@ -601,16 +609,18 @@
                     body: JSON.stringify({
                         message,
                         assistant_id: this.config.assistant_id,
-                        threadId: this.threadId,
+                        thread_id: this.thread_id,
                         action: 'send_message',
                         key: this.config.key
                     })
                 });
 
                 const data = await response.json();
-                this.threadId = data.threadId;
+                this.removeTypingIndicator();
+                this.thread_id = data.thread_id;
                 this.addMessage(data.response, 'bot');
             } catch (error) {
+                this.removeTypingIndicator();
                 console.error('Error sending message:', error);
                 this.addMessage('Sorry, there was an error sending your message.', 'bot');
             }
@@ -631,6 +641,26 @@
                 this.elements.widget.classList.remove('dark-mode');
             }
             this.config.darkMode = enabled;
+        }
+
+        showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            indicator.id = 'typing-indicator';
+            this.elements.messages.appendChild(indicator);
+            this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+        }
+
+        removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
         }
     }
 
