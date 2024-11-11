@@ -268,6 +268,7 @@
             border-radius: 12px;
             max-width: 80%;
             word-wrap: break-word;
+            width: fit-content;
         }
 
         .user-message {
@@ -275,6 +276,7 @@
             color: white;
             margin-left: auto;
             border-bottom-right-radius: 4px;
+            align-self: flex-end;
         }
 
         .bot-message {
