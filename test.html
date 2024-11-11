@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Widget Test Page</title>
+    <!-- Chat Widget Snippet -->
+    <script>
+        (function(w,d,s,o,f,js,fjs){
+            w['ChatWidget']=o;w[o]=w[o]||function(){
+                (w[o].q=w[o].q||[]).push(arguments)};
+            js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
+            js.id='chat-widget-script';
+            js.src=f;
+            js.async=1;
+            fjs.parentNode.insertBefore(js,fjs);
+        }(window,document,'script','cw','http://127.0.0.1:5500/chat-widget.js?v=2'));
+
+        cw('init', {
+            url: window.location.href,
+            domain: window.location.host,
+            pathname: window.location.pathname
+        });
+    </script>
+</head>
+<body>
+    <h1>Test Page for Chat Widget</h1>
+    <p>This is a test page to demonstrate the embedded chat widget.</p>
+
+    
+</body>
+</html> 
