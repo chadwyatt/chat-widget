@@ -552,6 +552,14 @@
                 this.elements.closeButton.addEventListener('click', () => {
                     this.elements.widget.classList.remove('active');
                 });
+
+                // Add click handler for prompt bubble
+                const promptBubble = document.querySelector('.chat-prompt-bubble');
+                if (promptBubble) {
+                    promptBubble.addEventListener('click', () => {
+                        this.elements.widget.classList.add('active');
+                    });
+                }
             }
 
             this.elements.sendButton.addEventListener('click', () => this.sendMessage());
