@@ -28,15 +28,20 @@
             right: 20px;
             width: 360px;
             height: 600px;
-            display: none;
+            opacity: 0;
+            visibility: hidden;
             z-index: 1000;
             background: #fff;
             border-radius: 12px;
             overflow: hidden;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s ease;
         }
 
         .chat-widget-popup.active {
-            display: block;
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .chat-trigger-button {
