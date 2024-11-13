@@ -624,6 +624,18 @@
                 this.elements.sendButton.disabled = !this.elements.input.value.trim();
             });
 
+            // Add click handler for prompt bubble
+            const promptBubble = document.querySelector('.chat-prompt-bubble');
+            if (promptBubble) {
+                promptBubble.addEventListener('click', () => {
+                    this.elements.widget.classList.add('active');
+                    if (this.config.centered) {
+                        this.elements.overlay.classList.add('active');
+                    }
+                    promptBubble.style.display = 'none';
+                });
+            }
+
             if (this.elements.promptClose) {
                 this.elements.promptClose.addEventListener('click', (e) => {
                     e.stopPropagation();
