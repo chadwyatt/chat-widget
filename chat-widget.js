@@ -6,7 +6,7 @@
             --secondary-color: #785030;
         }
 
-        .chat-widget {
+        .chat-widget-popup {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             flex-direction: column;
@@ -346,7 +346,7 @@
         }
 
         /* Dark mode styles */
-        .chat-widget.dark-mode {
+        .chat-widget-popup.dark-mode {
             background: #1c1c1e;
             color: #fff;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
@@ -428,6 +428,28 @@
         .chat-widget-popup .chat-suggestions + .chat-messages {
             height: calc(100% - 220px); /* Adjusted to account for suggestions */
         }
+
+        .chat-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 999;
+        }
+
+        .chat-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dark-mode + .chat-overlay {
+            background: rgba(0, 0, 0, 0.7);
+        }
     `;
 
     class ChatWidget {
@@ -487,7 +509,7 @@
                 // }
             // }
 
-            // console.log("config2:", config);
+            console.log("config2:", config);
 
             this.config = {
                 // endpoint: "https://hook.us1.make.com/ouc69ww2ybwot4w9utreqbrxddc3dozv",
@@ -500,7 +522,7 @@
                 darkMode: config.dark_mode || false,
                 key: config.key || null,
                 assistant_id: config.assistant_id || null,
-                centered: config.centered || true,
+                centered: config.centered || false,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -514,47 +536,47 @@
 
         createWidget() {
             const widgetHTML = `
-                <div style="position: relative;">
-                    <div id="chat-widget" class="chat-widget">
-                        <div class="chat-header">
-                            <div class="chat-title">
-                                <div class="chat-title-icon-wrapper">
-                                    <img 
-                                        src="${this.config.icon}"
-                                        alt="Chat icon"
-                                        class="chat-title-icon"
-                                    />
-                                </div>
-                                <span>${this.config.title}</span>
+                <div class="chat-widget-popup" id="chat-widget">
+                    <div class="chat-header">
+                        <div class="chat-title">
+                            <div class="chat-title-icon-wrapper">
+                                <img 
+                                    src="${this.config.icon}"
+                                    alt="Chat icon"
+                                    class="chat-title-icon"
+                                />
                             </div>
-                            <button class="close-button" id="close-chat">×</button>
+                            <span>${this.config.title}</span>
                         </div>
-                        ${this.config.suggestions.length ? `
-                            <div class="suggestions-title">Examples / Suggestions</div>
-                            <div class="chat-suggestions">
-                                ${this.config.suggestions.map(suggestion => 
-                                    `<button class="chat-suggestion">${suggestion}</button>`
-                                ).join('')}
-                            </div>
-                        ` : ''}
-                        <div id="chat-messages" class="chat-messages"></div>
-                        <div class="chat-input-container">
-                            <input type="text" id="chat-input" class="chat-input" placeholder="Type your message...">
-                            <button id="send-button" class="send-button">Send</button>
-                        </div>
+                        <button class="close-button" id="close-chat">×</button>
                     </div>
-
-                    <button id="chat-trigger" class="chat-trigger-button">
-                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-                        </svg>
-                    </button>
-
-                    <div class="chat-prompt-bubble">
-                        <button class="prompt-close-button" id="prompt-close">×</button>
-                        ${this.config.prompt}
+                    ${this.config.suggestions.length ? `
+                        <div class="suggestions-title">Examples / Suggestions</div>
+                        <div class="chat-suggestions">
+                            ${this.config.suggestions.map(suggestion => 
+                                `<button class="chat-suggestion">${suggestion}</button>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                    <div id="chat-messages" class="chat-messages"></div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chat-input" class="chat-input" placeholder="Type your message...">
+                        <button id="send-button" class="send-button">Send</button>
                     </div>
                 </div>
+
+                <button id="chat-trigger" class="chat-trigger-button">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                    </svg>
+                </button>
+
+                <div class="chat-prompt-bubble">
+                    <button class="prompt-close-button" id="prompt-close">×</button>
+                    ${this.config.prompt}
+                </div>
+
+                <div id="chat-overlay" class="chat-overlay"></div>
             `;
 
             const container = document.createElement('div');
@@ -568,31 +590,28 @@
                 sendButton: document.getElementById('send-button'),
                 trigger: document.getElementById('chat-trigger'),
                 closeButton: document.getElementById('close-chat'),
-                promptClose: document.getElementById('prompt-close')
+                promptClose: document.getElementById('prompt-close'),
+                overlay: document.getElementById('chat-overlay')
             };
         }
 
         setupEventListeners() {
-            if (this.config.mode === 'popup') {
-                this.elements.widget.classList.add('chat-widget-popup');
-                this.elements.trigger.style.display = 'block';
-                
-                this.elements.trigger.addEventListener('click', () => {
-                    this.elements.widget.classList.add('active');
-                });
-
-                this.elements.closeButton.addEventListener('click', () => {
-                    this.elements.widget.classList.remove('active');
-                });
-
-                // Add click handler for prompt bubble
-                const promptBubble = document.querySelector('.chat-prompt-bubble');
-                if (promptBubble) {
-                    promptBubble.addEventListener('click', () => {
-                        this.elements.widget.classList.add('active');
-                    });
+            this.elements.trigger.addEventListener('click', () => {
+                this.elements.widget.classList.add('active');
+                if (this.config.centered) {
+                    this.elements.overlay.classList.add('active');
                 }
-            }
+            });
+
+            this.elements.closeButton.addEventListener('click', () => {
+                this.elements.widget.classList.remove('active');
+                this.elements.overlay.classList.remove('active');
+            });
+
+            this.elements.overlay.addEventListener('click', () => {
+                this.elements.widget.classList.remove('active');
+                this.elements.overlay.classList.remove('active');
+            });
 
             this.elements.sendButton.addEventListener('click', () => this.sendMessage());
             this.elements.input.addEventListener('keypress', (e) => {
