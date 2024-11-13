@@ -481,6 +481,12 @@
             if (this.config.centered) {
                 this.elements.widget.classList.add('centered');
             }
+            if (this.config.auto_open) {
+                this.elements.widget.classList.add('active');
+                if (this.config.centered) {
+                    this.elements.overlay.classList.add('active');
+                }
+            }
         }
 
         async getConfig(config) {
@@ -509,7 +515,7 @@
                 // }
             // }
 
-            console.log("config2:", config);
+            // console.log("config2:", config);
 
             this.config = {
                 // endpoint: "https://hook.us1.make.com/ouc69ww2ybwot4w9utreqbrxddc3dozv",
@@ -523,6 +529,7 @@
                 key: config.key || null,
                 assistant_id: config.assistant_id || null,
                 centered: config.centered || false,
+                auto_open: config.auto_open || false,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -652,6 +659,23 @@
                     this.elements.input.value = button.textContent;
                     this.sendMessage();
                 });
+            });
+
+            // Add click handlers for any toggle-chat-window elements
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.toggle-chat-window')) {
+                    if (this.elements.widget.classList.contains('active')) {
+                        // Close the chat if it's open
+                        this.elements.widget.classList.remove('active');
+                        this.elements.overlay.classList.remove('active');
+                    } else {
+                        // Open the chat if it's closed
+                        this.elements.widget.classList.add('active');
+                        if (this.config.centered) {
+                            this.elements.overlay.classList.add('active');
+                        }
+                    }
+                }
             });
         }
 
