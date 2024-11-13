@@ -44,6 +44,29 @@
             transform: translateY(0);
         }
 
+        .chat-widget-popup.centered {
+            bottom: auto;
+            right: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(90vw, 800px);
+            height: min(90vh, 800px);
+            aspect-ratio: 4/3;
+        }
+
+        .chat-widget-popup.centered.active {
+            visibility: visible;
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+
+        @media (orientation: portrait) {
+            .chat-widget-popup.centered {
+                aspect-ratio: 3/4;
+            }
+        }
+
         .chat-trigger-button {
             position: fixed;
             bottom: 20px;
@@ -433,6 +456,9 @@
             if (this.config.darkMode) {
                 this.elements.widget.classList.add('dark-mode')
             }
+            if (this.config.centered) {
+                this.elements.widget.classList.add('centered');
+            }
         }
 
         async getConfig(config) {
@@ -473,7 +499,8 @@
                 icon: config.icon || 'https://assets.zyrosite.com/dWx06KrN05hEkWvY/lml-anchor-m6Lwvywoloukoege.png',
                 darkMode: config.dark_mode || false,
                 key: config.key || null,
-                assistant_id: config.assistant_id || null
+                assistant_id: config.assistant_id || null,
+                centered: config.centered || true,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -658,6 +685,15 @@
             this.config.darkMode = enabled;
         }
 
+        toggleCenteredMode(enabled) {
+            if (enabled) {
+                this.elements.widget.classList.add('centered');
+            } else {
+                this.elements.widget.classList.remove('centered');
+            }
+            this.config.centered = enabled;
+        }
+
         showTypingIndicator() {
             const indicator = document.createElement('div');
             indicator.className = 'typing-indicator';
@@ -707,6 +743,10 @@
         } else if (method === 'toggleDarkMode') {
             if (window.chatWidget) {
                 window.chatWidget.toggleDarkMode(params[0]);
+            }
+        } else if (method === 'toggleCenteredMode') {
+            if (window.chatWidget) {
+                window.chatWidget.toggleCenteredMode(params[0]);
             }
         }
     };
