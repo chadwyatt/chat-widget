@@ -472,6 +472,14 @@
             };
             await this.getConfig(config);
             // console.log("config3:", config);
+            
+            // Check for thread_id in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const threadId = urlParams.get('thread_id');
+            if (threadId) {
+                await this.loadThread(threadId);
+            }
+            
             this.injectStyles()
             this.createWidget()
             this.setupEventListeners()
@@ -486,6 +494,8 @@
                 if (this.config.centered) {
                     this.elements.overlay.classList.add('active');
                 }
+                // Load message history if auto-opening
+                this.loadMessageHistory();
             }
         }
 
@@ -515,7 +525,7 @@
                 // }
             // }
 
-            // console.log("config2:", config);
+            console.log("config2:", config);
 
             this.config = {
                 // endpoint: "https://hook.us1.make.com/ouc69ww2ybwot4w9utreqbrxddc3dozv",
@@ -608,6 +618,8 @@
                 if (this.config.centered) {
                     this.elements.overlay.classList.add('active');
                 }
+                // Load message history if it exists
+                this.loadMessageHistory();
             });
 
             this.elements.closeButton.addEventListener('click', () => {
@@ -766,6 +778,63 @@
             const indicator = document.getElementById('typing-indicator');
             if (indicator) {
                 indicator.remove();
+            }
+        }
+
+        // Add new loadThread method
+        async loadThread(threadId) {
+            try {
+                const response = await fetch(this.config.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'load_thread',
+                        thread_id: threadId,
+                        key: this.config.key,
+                        assistant_id: this.config.assistant_id
+                    })
+                });
+
+                const data = await response.json();
+                console.log("data:", data);
+                // if (data.messages) {
+                    // Clear any existing messages
+                    // this.elements.messages.innerHTML = '';
+                    
+                    // Add each message to the chat
+                    // data.data.forEach(msg => {
+                    //     this.addMessage(msg.content[0], msg.role === 'user' ? 'user' : 'bot');
+                    // });
+
+                    this.messageHistory = data.data
+
+                    
+                    // Store the thread_id
+                    this.thread_id = threadId;
+                // }
+            } catch (error) {
+                console.error('Error loading thread:', error);
+                this.addMessage('Sorry, there was an error loading the chat history.', 'bot');
+            }
+        }
+
+        // Add new method to handle message history loading
+        loadMessageHistory() {
+            if (this.messageHistory && this.messageHistory.length) {
+                // Clear suggestions
+                const suggestionsContainer = document.querySelector('.chat-suggestions');
+                const suggestionsTitle = document.querySelector('.suggestions-title');
+                if (suggestionsContainer) suggestionsContainer.remove();
+                if (suggestionsTitle) suggestionsTitle.remove();
+
+                // Add each message to the chat
+                this.messageHistory.forEach(msg => {
+                    this.addMessage(msg.content[0].text.value, msg.role === 'user' ? 'user' : 'bot');
+                });
+                // Clear the message history after loading
+                this.messageHistory = null;
             }
         }
     }
