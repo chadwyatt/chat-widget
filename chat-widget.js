@@ -459,11 +459,8 @@
         }
 
         async init(config) {
-            // Get the page URL info
             const pageUrl = window.location;
-            // console.log("pageUrl:", pageUrl);
             
-            // Merge the URL info with provided config
             config = {
                 ...config,
                 url: pageUrl.href,
@@ -471,12 +468,20 @@
                 pathname: pageUrl.pathname
             };
             await this.getConfig(config);
-            // console.log("config3:", config);
             
-            // Check for thread_id in URL parameters
+            // Check for thread_id in both URL and localStorage
             const urlParams = new URLSearchParams(window.location.search);
-            const threadId = urlParams.get('thread_id');
+            const urlThreadId = urlParams.get('thread_id');
+            const storedThreadId = localStorage.getItem('chat_thread_id');
+            
+            // URL thread_id takes precedence over stored thread_id
+            const threadId = urlThreadId || storedThreadId;
+            
             if (threadId) {
+                // Save thread_id to localStorage if it came from URL
+                if (urlThreadId) {
+                    localStorage.setItem('chat_thread_id', urlThreadId);
+                }
                 await this.loadThread(threadId);
             }
             
@@ -799,24 +804,25 @@
 
                 const data = await response.json();
                 console.log("data:", data);
-                // if (data.messages) {
-                    // Clear any existing messages
-                    // this.elements.messages.innerHTML = '';
-                    
-                    // Add each message to the chat
-                    // data.data.forEach(msg => {
-                    //     this.addMessage(msg.content[0], msg.role === 'user' ? 'user' : 'bot');
-                    // });
-
-                    this.messageHistory = data.data
-
+                if (data.data) {
+                    // Store messages in messageHistory
+                    this.messageHistory = data.data;
                     
                     // Store the thread_id
                     this.thread_id = threadId;
-                // }
+                    
+                    // If chat is already open, load messages immediately
+                    // if (this.elements.widget.classList.contains('active')) {
+                    //     this.loadMessageHistory();
+                    // }
+                }
             } catch (error) {
                 console.error('Error loading thread:', error);
-                this.addMessage('Sorry, there was an error loading the chat history.', 'bot');
+                // Remove thread_id from storage if loading failed
+                localStorage.removeItem('chat_thread_id');
+                if (this.elements.widget.classList.contains('active')) {
+                    this.addMessage('Sorry, there was an error loading the chat history.', 'bot');
+                }
             }
         }
 
