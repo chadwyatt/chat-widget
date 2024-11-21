@@ -24,7 +24,7 @@
 
         .chat-widget-popup {
             position: fixed;
-            bottom: 20px;
+            bottom: 90px;
             right: 20px;
             width: 360px;
             height: 600px;
@@ -590,6 +590,7 @@
                 assistant_id: config.assistant_id || null,
                 centered: config.centered || false,
                 auto_open: config.auto_open || false,
+                stay_open: config.stay_open || false,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -621,7 +622,7 @@
                                     <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                                 </svg>
                             </button>
-                            <button class="close-button" id="close-chat">×</button>
+                            ${!this.config.stay_open ? '<button class="close-button" id="close-chat">×</button>' : ''}
                         </div>
                     </div>
                     ${this.config.suggestions.length ? `
@@ -639,6 +640,7 @@
                     </div>
                 </div>
 
+                ${(!this.config.stay_open || !this.config.auto_open) ? `
                 <button id="chat-trigger" class="chat-trigger-button">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
@@ -648,7 +650,7 @@
                 <div class="chat-prompt-bubble">
                     <button class="prompt-close-button" id="prompt-close">×</button>
                     ${this.config.prompt}
-                </div>
+                </div>` : ''}
 
                 <div id="chat-overlay" class="chat-overlay"></div>
             `;
@@ -670,7 +672,7 @@
         }
 
         setupEventListeners() {
-            this.elements.trigger.addEventListener('click', () => {
+            this.elements?.trigger?.addEventListener('click', () => {
                 this.elements.widget.classList.add('active');
                 if (this.config.centered) {
                     this.elements.overlay.classList.add('active');
@@ -678,15 +680,18 @@
                 // Load message history if it exists
                 this.loadMessageHistory();
             });
-
-            this.elements.closeButton.addEventListener('click', () => {
-                this.elements.widget.classList.remove('active');
-                this.elements.overlay.classList.remove('active');
-            });
+            if (this.elements.closeButton) {
+                this.elements.closeButton.addEventListener('click', () => {
+                    this.elements.widget.classList.remove('active');
+                    this.elements.overlay.classList.remove('active');
+                });
+            }
 
             this.elements.overlay.addEventListener('click', () => {
-                this.elements.widget.classList.remove('active');
-                this.elements.overlay.classList.remove('active');
+                if (!this.config.stay_open) {
+                    this.elements.widget.classList.remove('active');
+                    this.elements.overlay.classList.remove('active');
+                }
             });
 
             this.elements.sendButton.addEventListener('click', () => this.sendMessage());
