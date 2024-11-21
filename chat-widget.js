@@ -450,6 +450,51 @@
         .dark-mode + .chat-overlay {
             background: rgba(0, 0, 0, 0.7);
         }
+
+        .refresh-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dark-mode .refresh-button {
+            color: #fff;
+        }
+
+        .dark-mode .refresh-button:hover {
+            background-color: #3d3d3d;
+        }
+
+        /* Update the header buttons container styles */
+        .chat-header > div {
+            display: flex;
+            align-items: center;
+            gap: 4px;  /* Controls spacing between refresh and close buttons */
+        }
+
+        .refresh-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .refresh-button:disabled:hover {
+            background: none;
+        }
+
+        .dark-mode .refresh-button:disabled:hover {
+            background: none;
+        }
     `;
 
     class ChatWidget {
@@ -570,7 +615,14 @@
                             </div>
                             <span>${this.config.title}</span>
                         </div>
-                        <button class="close-button" id="close-chat">×</button>
+                        <div>
+                            <button class="refresh-button" id="refresh-chat" ${!this.thread_id ? 'disabled' : ''}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                </svg>
+                            </button>
+                            <button class="close-button" id="close-chat">×</button>
+                        </div>
                     </div>
                     ${this.config.suggestions.length ? `
                         <div class="suggestions-title">Examples / Suggestions</div>
@@ -694,6 +746,41 @@
                     }
                 }
             });
+
+            const refreshButton = document.getElementById('refresh-chat');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                    // Clear localStorage
+                    localStorage.removeItem('chat_thread_id');
+                    
+                    // Clear thread_id
+                    this.thread_id = null;
+                    
+                    // Clear messages
+                    this.elements.messages.innerHTML = '';
+                    
+                    // Re-add suggestions if they exist
+                    if (this.config.suggestions.length) {
+                        const suggestionsHTML = `
+                            <div class="suggestions-title">Examples / Suggestions</div>
+                            <div class="chat-suggestions">
+                                ${this.config.suggestions.map(suggestion => 
+                                    `<button class="chat-suggestion">${suggestion}</button>`
+                                ).join('')}
+                            </div>
+                        `;
+                        this.elements.messages.insertAdjacentHTML('beforebegin', suggestionsHTML);
+                        
+                        // Reattach suggestion click handlers
+                        document.querySelectorAll('.chat-suggestion').forEach(button => {
+                            button.addEventListener('click', () => {
+                                this.elements.input.value = button.textContent;
+                                this.sendMessage();
+                            });
+                        });
+                    }
+                });
+            }
         }
 
         async sendMessage() {
@@ -732,6 +819,14 @@
                 const data = await response.json();
                 this.removeTypingIndicator();
                 this.thread_id = data.thread_id;
+                localStorage.setItem('chat_thread_id', data.thread_id);
+                
+                // Update refresh button state
+                const refreshButton = document.getElementById('refresh-chat');
+                if (refreshButton) {
+                    refreshButton.disabled = false;
+                }
+                
                 this.addMessage(data.response, 'bot');
             } catch (error) {
                 this.removeTypingIndicator();
