@@ -590,25 +590,16 @@
                 })
             });
 
-            // if (configResponse.ok) {
-                const configData = await configResponse.json();
-
-                // console.log("configData:", configData);
-                // if (configData.config) {
-                    config = {...config, ...configData};
-                // }
-            // }
-
-            console.log("config2:", config);
-
+            const configData = await configResponse.json();
+            config = {...config, ...configData};
+            
             this.config = {
-                // endpoint: "https://hook.us1.make.com/ouc69ww2ybwot4w9utreqbrxddc3dozv",
-                endpoint: "https://hook.us1.make.com/g1xnzwxq3faod19mkcx0d3yhm1z0c6nk",
+                endpoint: endpoint,
                 title: config.title || 'Chat Support',
                 mode: config.mode || 'popup',
                 suggestions: config.suggestions.split("\n") || [],
                 prompt: config.prompt || 'How can we help you today?',
-                icon: config.icon || 'https://assets.zyrosite.com/dWx06KrN05hEkWvY/lml-anchor-m6Lwvywoloukoege.png',
+                icon: config.icon || null,
                 darkMode: config.dark_mode || false,
                 key: config.key || null,
                 assistant_id: config.assistant_id || null,
