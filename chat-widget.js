@@ -1,5 +1,4 @@
 (function() {
-    // Store styles in a string
     const styles = `
         :root {
             --primary-color: #bb7e4c;
