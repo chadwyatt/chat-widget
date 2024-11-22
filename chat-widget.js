@@ -534,7 +534,8 @@
                 ...config,
                 url: pageUrl.href,
                 domain: pageUrl.hostname,
-                pathname: pageUrl.pathname
+                pathname: pageUrl.pathname,
+                endpoint: config.endpoint
             };
             await this.getConfig(config);
             
@@ -574,10 +575,8 @@
         }
 
         async getConfig(config) {
-            let endpoint = "https://hook.us1.make.com/g1xnzwxq3faod19mkcx0d3yhm1z0c6nk";
-
             // Fetch configuration from endpoint
-            const configResponse = await fetch(endpoint, {
+            const configResponse = await fetch(config.endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -594,7 +593,7 @@
             config = {...config, ...configData};
             
             this.config = {
-                endpoint: endpoint,
+                endpoint: config.endpoint,
                 title: config.title || 'Chat Support',
                 mode: config.mode || 'popup',
                 suggestions: config.suggestions.split("\n") || [],
@@ -645,13 +644,15 @@
                 <div class="chat-widget-popup" id="chat-widget">
                     <div class="chat-header">
                         <div class="chat-title">
-                            <div class="chat-title-icon-wrapper">
-                                <img 
-                                    src="${this.config.icon}"
-                                    alt="Chat icon"
-                                    class="chat-title-icon"
-                                />
-                            </div>
+                            ${this.config.icon ? `
+                                <div class="chat-title-icon-wrapper">
+                                    <img 
+                                        src="${this.config.icon}"
+                                        alt="Chat icon"
+                                        class="chat-title-icon"
+                                    />
+                                </div>
+                            ` : ''}
                             <span>${this.config.title}</span>
                         </div>
                         <div>

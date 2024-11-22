@@ -77,9 +77,8 @@
         }(window,document,'script','cw','http://127.0.0.1:5500/chat-widget.js?v=2'));
 
         cw('init', {
-            url: window.location.href,
-            domain: window.location.host,
-            pathname: window.location.pathname
+            // The endpoint is the URL of the Make API endpoint that will receive the chat messages
+            endpoint: "https://hook.us1.make.com/g1xnzwxq3faod19mkcx0d3yhm1z0c6nk"
         });
     </script>
 </head>
