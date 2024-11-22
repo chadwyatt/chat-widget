@@ -522,7 +522,6 @@
 
     class ChatWidget {
         constructor(config) {
-            // console.log("config1:", config);
             this.init(config);
         }
 
