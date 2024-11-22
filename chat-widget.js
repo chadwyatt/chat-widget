@@ -33,7 +33,6 @@
             z-index: 1000;
             background: #fff;
             border-radius: 12px;
-            overflow: hidden;
             transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s ease;
         }
@@ -119,6 +118,7 @@
             justify-content: space-between;
             align-items: center;
             background: #fff;
+            border-radius: 12px 12px 0 0;
         }
 
         .chat-title {
@@ -139,6 +139,7 @@
             align-items: center;
             justify-content: center;
             padding: 2px;
+            margin-right: 5px;
         }
 
         .chat-title-icon {
@@ -253,6 +254,7 @@
             padding: 16px;
             border-top: 1px solid #E9E9EB;
             background: #fff;
+            border-radius: 0 0 12px 12px;
         }
 
         .chat-input {
@@ -494,6 +496,29 @@
         .dark-mode .refresh-button:disabled:hover {
             background: none;
         }
+
+        /* Update powered by styles */
+        .chat-powered-by {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            padding: 8px 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin-bottom: -30px;
+        }
+
+        .chat-powered-by a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .chat-powered-by a:hover {
+            text-decoration: underline;
+        }
+
+        .dark-mode .chat-powered-by {
+            color: #999;
+        }
     `;
 
     class ChatWidget {
@@ -590,6 +615,8 @@
                 centered: config.centered || false,
                 auto_open: config.auto_open || false,
                 stay_open: config.stay_open || false,
+                powered_by_name: config.powered_by_name || null,
+                powered_by_url: config.powered_by_url || null,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -656,6 +683,11 @@
                         <input type="text" id="chat-input" class="chat-input" placeholder="Type your message...">
                         <button id="send-button" class="send-button">Send</button>
                     </div>
+                    ${this.config.powered_by_name && this.config.powered_by_url ? `
+                        <div class="chat-powered-by">
+                            Powered by <a href="${this.config.powered_by_url}" target="_blank" rel="noopener">${this.config.powered_by_name}</a>
+                        </div>
+                    ` : ''}
                 </div>
 
                 ${(!this.config.stay_open || !this.config.auto_open) ? `
