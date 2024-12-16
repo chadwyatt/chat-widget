@@ -597,12 +597,12 @@
                 suggestions: config.suggestions.split("\n") || [],
                 prompt: config.prompt || 'How can we help you today?',
                 icon: config.icon || null,
-                darkMode: config.dark_mode || false,
+                darkMode: config.dark_mode == 'true' || false,
                 key: config.key || null,
                 assistant_id: config.assistant_id || null,
-                centered: config.centered || false,
-                auto_open: config.auto_open || false,
-                stay_open: config.stay_open || false,
+                centered: config.centered == 'true' || false,
+                auto_open: config.auto_open == 'true' || false,
+                stay_open: config.stay_open == 'true' || false,
                 powered_by_name: config.powered_by_name || null,
                 powered_by_url: config.powered_by_url || null,
             };
@@ -776,6 +776,7 @@
                         this.elements.overlay.classList.add('active');
                     }
                     promptBubble.style.display = 'none';
+                    this.loadMessageHistory();
                 });
             }
 
