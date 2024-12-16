@@ -906,9 +906,39 @@
         addMessage(text, type) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}-message`;
-            messageDiv.textContent = text;
+            messageDiv.innerHTML = this.formatText(text);
             this.elements.messages.appendChild(messageDiv);
             this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+        }
+
+        formatText(text) {
+            // Replace newlines with <br /> tags
+            let formattedText = text.replace(/\n/g, '<br />');
+
+            // Handle bold text (**text** or __text__)
+            formattedText = formattedText.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>');
+
+            // Handle italic text (*text* or _text_)
+            formattedText = formattedText.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+
+            // Handle code blocks (```text```)
+            formattedText = formattedText.replace(/```(.*?)```/gs, '<pre><code style="border: 1px solid #ddd; border-radius: 4px; padding: 8px; display: block;">$1</code></pre>');
+
+            // Handle inline code (`text`)
+            formattedText = formattedText.replace(/`(.*?)`/g, '<code style="border: 1px solid #ddd; padding: 2px 4px; border-radius: 3px;">$1</code>');
+
+            // Handle links [text](url)
+            formattedText = formattedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+            // Handle unordered lists
+            formattedText = formattedText.replace(/^\s*[-*+]\s+(.+)/gm, '<li>$1</li>');
+            formattedText = formattedText.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+            // Handle ordered lists
+            formattedText = formattedText.replace(/^\s*\d+\.\s+(.+)/gm, '<li>$1</li>');
+            formattedText = formattedText.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
+
+            return formattedText;
         }
 
         toggleDarkMode(enabled) {
