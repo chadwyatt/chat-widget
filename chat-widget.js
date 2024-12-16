@@ -637,12 +637,12 @@
             const initialIcon = (this.config.auto_open && !this.config.centered && !this.config.stay_open) 
                 ? icons.close 
                 : icons.chat;
-            
+
             const widgetHTML = `
                 <div class="chat-widget-popup" id="chat-widget">
                     <div class="chat-header">
                         <div class="chat-title">
-                            ${this.config.icon ? `
+                            ${this.config.icon != "null" ? `
                                 <div class="chat-title-icon-wrapper">
                                     <img 
                                         src="${this.config.icon}"
