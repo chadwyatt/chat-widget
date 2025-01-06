@@ -533,7 +533,7 @@
                 url: pageUrl.href,
                 domain: pageUrl.hostname,
                 pathname: pageUrl.pathname,
-                endpoint: config.endpoint
+                endpoint: "https://webhook.latenode.com/18553/dev/ff64a84e-2390-4636-8733-bdebd13b309d"
             };
             await this.getConfig(config);
             
@@ -605,6 +605,7 @@
                 stay_open: config.stay_open == 'true' || false,
                 powered_by_name: config.powered_by_name || null,
                 powered_by_url: config.powered_by_url || null,
+                user_id: config.user_id || null,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -880,7 +881,8 @@
                         assistant_id: this.config.assistant_id,
                         thread_id: this.thread_id,
                         action: 'send_message',
-                        key: this.config.key
+                        key: this.config.key,
+                        user_id: this.config.user_id
                     })
                 });
 

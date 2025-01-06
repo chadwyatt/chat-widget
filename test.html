@@ -71,15 +71,13 @@
                 (w[o].q=w[o].q||[]).push(arguments)};
             js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
             js.id='chat-widget-script';
-            js.src=f;
+            js.src=window.location.hostname === '127.0.0.1' ? 
+                'http://127.0.0.1:5500/chat-widget.js' : 
+                'https://chadwyatt.github.io/chat-widget/chat-widget.js';
             js.async=1;
             fjs.parentNode.insertBefore(js,fjs);
-        }(window,document,'script','cw','https://chadwyatt.github.io/chat-widget/chat-widget.js'));
-
-        cw('init', {
-            // The endpoint is the URL of the Make API endpoint that will receive the chat messages
-            endpoint: "https://hook.us1.make.com/g1xnzwxq3faod19mkcx0d3yhm1z0c6nk"
-        });
+        }(window,document,'script','cw'));
+        cw('init', {});
     </script>
 </head>
 <body>
