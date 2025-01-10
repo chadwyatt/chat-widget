@@ -1,3 +1,5 @@
+import Vapi from "@vapi-ai/web";
+
 (function() {
     const styles = `
         :root {
@@ -451,7 +453,8 @@
             background: rgba(0, 0, 0, 0.7);
         }
 
-        .refresh-button {
+        .refresh-button,
+        .microphone-button {
             background: none;
             border: none;
             cursor: pointer;
@@ -462,17 +465,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 32px;
+            width: 32px;
         }
 
-        .refresh-button:hover {
+        .refresh-button:hover,
+        .microphone-button:hover {
             background-color: #f0f0f0;
         }
 
-        .dark-mode .refresh-button {
+        .dark-mode .refresh-button,
+        .dark-mode .microphone-button {
             color: #fff;
         }
 
-        .dark-mode .refresh-button:hover {
+        .dark-mode .refresh-button:hover,
+        .dark-mode .microphone-button:hover {
             background-color: #3d3d3d;
         }
 
@@ -533,7 +541,7 @@
                 url: pageUrl.href,
                 domain: pageUrl.hostname,
                 pathname: pageUrl.pathname,
-                endpoint: "https://webhook.latenode.com/18553/dev/ff64a84e-2390-4636-8733-bdebd13b309d"
+                endpoint: "https://webhook.latenode.com/18553/prod/ff64a84e-2390-4636-8733-bdebd13b309d"
             };
             await this.getConfig(config);
             
@@ -606,6 +614,8 @@
                 powered_by_name: config.powered_by_name || null,
                 powered_by_url: config.powered_by_url || null,
                 user_id: config.user_id || null,
+                vapi_public_key: config.vapi_public_key || null,
+                vapi_assistant_id: config.vapi_assistant_id || null,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -627,7 +637,10 @@
                 </svg>`,
                 refresh: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                </svg>`
+                </svg>`,
+                microphone: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                </svg>`,
             };
         }
 
@@ -655,6 +668,11 @@
                             <span>${this.config.title}</span>
                         </div>
                         <div>
+                            ${this.config.vapi_public_key && this.config.vapi_public_key != "null" ? `
+                                <button class="microphone-button" id="microphone-chat">
+                                    ${icons.microphone}
+                                </button>
+                            ` : ''}
                             <button class="refresh-button" id="refresh-chat" ${!this.thread_id ? 'disabled' : ''}>
                                 ${icons.refresh}
                             </button>
@@ -847,6 +865,141 @@
                                 this.sendMessage();
                             });
                         });
+                    }
+                });
+            }
+
+            const micButton = document.getElementById('microphone-chat');
+            let vapi = null;
+            if (micButton) {
+                micButton.addEventListener('click', () => {
+                    // Toggle active state of mic button
+                    micButton.classList.toggle('active');
+                    
+                    if (micButton.classList.contains('active')) {
+                        console.log("config", this.config)
+                        // Start recording
+                        console.log("start call");
+                        vapi = new Vapi(this.config.vapi_public_key);
+                        console.log("vapi:", vapi);
+
+                        // Create and show overlay inside the chat widget
+                        const overlay = document.createElement('div');
+                        overlay.id = 'call-starting-overlay';
+                        overlay.style.position = 'absolute';
+                        overlay.style.top = '0';
+                        overlay.style.left = '0';
+                        overlay.style.width = '100%';
+                        overlay.style.height = '100%';
+                        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                        overlay.style.display = 'flex';
+                        overlay.style.alignItems = 'center';
+                        overlay.style.justifyContent = 'center';
+                        overlay.style.zIndex = '1001';
+                        overlay.style.borderRadius = '12px';
+
+                        // Create typing indicator
+                        const typingIndicator = document.createElement('div');
+                        typingIndicator.className = 'typing-indicator';
+                        typingIndicator.innerHTML = `
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        `;
+                        overlay.appendChild(typingIndicator);
+
+                        this.elements.widget.appendChild(overlay);
+
+                        vapi.start(this.config.vapi_assistant_id);
+
+                        vapi.on("error", (e) => {
+                            console.error(e);
+                        });
+
+                        vapi.on("call-start", () => {
+                            console.log("Call has started.");
+                            // Update overlay to keep semi-transparent background
+                            overlay.innerHTML = ''; // Clear the starting message
+
+                            // Create volume indicator
+                            const volumeIndicator = document.createElement('div');
+                            volumeIndicator.id = 'volume-indicator';
+                            volumeIndicator.style.position = 'absolute';
+                            volumeIndicator.style.top = '50%';
+                            volumeIndicator.style.left = '50%';
+                            volumeIndicator.style.transform = 'translate(-50%, -50%)';
+                            volumeIndicator.style.width = '80%';
+                            volumeIndicator.style.height = '10px';
+                            volumeIndicator.style.backgroundColor = 'transparent'; // Remove grey background
+                            volumeIndicator.style.overflow = 'hidden';
+                            volumeIndicator.style.zIndex = '1002'; // Ensure it's above the overlay
+                            this.elements.widget.appendChild(volumeIndicator);
+
+                            const volumeLevel = document.createElement('div');
+                            volumeLevel.style.height = '10px'; // Match the height of the volume indicator
+                            volumeLevel.style.width = '100%'; // Set full width for scaling
+                            volumeLevel.style.background = 'linear-gradient(to right, rgba(76, 175, 80, 0), #4caf50, rgba(76, 175, 80, 0))';
+                            volumeLevel.style.transformOrigin = 'center'; // Set transform origin to center
+                            volumeLevel.style.transform = 'scaleX(0)'; // Start with no width
+                            volumeIndicator.appendChild(volumeLevel);
+
+                            vapi.on("volume-level", (volume) => {
+                                console.log(`Assistant volume level: ${volume}`);
+                                volumeLevel.style.transform = `scaleX(${volume})`; // Scale from center
+                            });
+
+                            // Create "End Call" button with SVG icon
+                            const endCallButton = document.createElement('button');
+                            endCallButton.id = 'end-call-button';
+                            endCallButton.style.position = 'absolute';
+                            endCallButton.style.top = 'calc(50% + 20px)'; // Position below the volume indicator
+                            endCallButton.style.left = '50%';
+                            endCallButton.style.transform = 'translateX(-50%)';
+                            endCallButton.style.zIndex = '1002';
+                            endCallButton.style.padding = '10px';
+                            endCallButton.style.backgroundColor = '#f44336';
+                            endCallButton.style.border = 'none';
+                            endCallButton.style.borderRadius = '50%';
+                            endCallButton.style.cursor = 'pointer';
+                            endCallButton.style.display = 'flex';
+                            endCallButton.style.alignItems = 'center';
+                            endCallButton.style.justifyContent = 'center';
+                            endCallButton.style.width = '40px';
+                            endCallButton.style.height = '40px';
+
+                            // SVG icon for phone hangup
+                            const phoneHangupIcon = `
+                                <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.62 10.79a15.09 15.09 0 006.59 6.59l2.2-2.2a1 1 0 011.11-.21 11.72 11.72 0 004.39.84 1 1 0 011 1v3.44a1 1 0 01-1 1A19.93 19.93 0 012 4a1 1 0 011-1h3.44a1 1 0 011 1 11.72 11.72 0 00.84 4.39 1 1 0 01-.21 1.11z"/>
+                                </svg>
+                            `;
+                            endCallButton.innerHTML = phoneHangupIcon;
+                            this.elements.widget.appendChild(endCallButton);
+
+                            endCallButton.addEventListener('click', () => {
+                                console.log("Ending call");
+                                vapi.stop();
+                                micButton.classList.remove('active'); // Update mic button state
+                            });
+                        });
+
+                        vapi.on("call-end", () => {
+                            console.log("Call has ended.");
+                            // Remove volume indicator, end call button, and overlay
+                            const volumeIndicator = document.getElementById('volume-indicator');
+                            if (volumeIndicator) {
+                                volumeIndicator.remove();
+                            }
+                            const endCallButton = document.getElementById('end-call-button');
+                            if (endCallButton) {
+                                endCallButton.remove();
+                            }
+                            overlay.remove();
+                        });
+                    } else {
+                        // Stop recording
+                        console.log("stop call");
+                        vapi.stop();
                     }
                 });
             }
