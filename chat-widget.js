@@ -541,7 +541,7 @@ import Vapi from "@vapi-ai/web";
                 url: pageUrl.href,
                 domain: pageUrl.hostname,
                 pathname: pageUrl.pathname,
-                endpoint: "https://webhook.latenode.com/18553/dev/ff64a84e-2390-4636-8733-bdebd13b309d"
+                endpoint: "https://webhook.latenode.com/18553/prod/ff64a84e-2390-4636-8733-bdebd13b309d"
             };
             await this.getConfig(config);
             
@@ -614,6 +614,8 @@ import Vapi from "@vapi-ai/web";
                 powered_by_name: config.powered_by_name || null,
                 powered_by_url: config.powered_by_url || null,
                 user_id: config.user_id || null,
+                vapi_public_key: config.vapi_public_key || null,
+                vapi_assistant_id: config.vapi_assistant_id || null,
             };
             // console.log("config4:", this.config);
             this.thread_id = null;
@@ -666,9 +668,11 @@ import Vapi from "@vapi-ai/web";
                             <span>${this.config.title}</span>
                         </div>
                         <div>
-                            <button class="microphone-button" id="microphone-chat">
-                                ${icons.microphone}
-                            </button>
+                            ${this.config.vapi_public_key && this.config.vapi_public_key != "null" ? `
+                                <button class="microphone-button" id="microphone-chat">
+                                    ${icons.microphone}
+                                </button>
+                            ` : ''}
                             <button class="refresh-button" id="refresh-chat" ${!this.thread_id ? 'disabled' : ''}>
                                 ${icons.refresh}
                             </button>
@@ -873,9 +877,10 @@ import Vapi from "@vapi-ai/web";
                     micButton.classList.toggle('active');
                     
                     if (micButton.classList.contains('active')) {
+                        console.log("config", this.config)
                         // Start recording
                         console.log("start call");
-                        vapi = new Vapi("e32a8760-015c-4b57-b4e2-ce70a034967f");
+                        vapi = new Vapi(this.config.vapi_public_key);
                         console.log("vapi:", vapi);
 
                         // Create and show overlay inside the chat widget
@@ -886,11 +891,12 @@ import Vapi from "@vapi-ai/web";
                         overlay.style.left = '0';
                         overlay.style.width = '100%';
                         overlay.style.height = '100%';
-                        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
                         overlay.style.display = 'flex';
                         overlay.style.alignItems = 'center';
                         overlay.style.justifyContent = 'center';
                         overlay.style.zIndex = '1001';
+                        overlay.style.borderRadius = '12px';
 
                         // Create typing indicator
                         const typingIndicator = document.createElement('div');
@@ -904,7 +910,7 @@ import Vapi from "@vapi-ai/web";
 
                         this.elements.widget.appendChild(overlay);
 
-                        vapi.start('b67b0be5-fe08-41f8-965a-dd68baf61bb1');
+                        vapi.start(this.config.vapi_assistant_id);
 
                         vapi.on("error", (e) => {
                             console.error(e);
