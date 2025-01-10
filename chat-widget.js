@@ -1,3 +1,5 @@
+import Vapi from "@vapi-ai/web";
+
 (function() {
     const styles = `
         :root {
@@ -451,7 +453,8 @@
             background: rgba(0, 0, 0, 0.7);
         }
 
-        .refresh-button {
+        .refresh-button,
+        .microphone-button {
             background: none;
             border: none;
             cursor: pointer;
@@ -462,17 +465,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 32px;
+            width: 32px;
         }
 
-        .refresh-button:hover {
+        .refresh-button:hover,
+        .microphone-button:hover {
             background-color: #f0f0f0;
         }
 
-        .dark-mode .refresh-button {
+        .dark-mode .refresh-button,
+        .dark-mode .microphone-button {
             color: #fff;
         }
 
-        .dark-mode .refresh-button:hover {
+        .dark-mode .refresh-button:hover,
+        .dark-mode .microphone-button:hover {
             background-color: #3d3d3d;
         }
 
@@ -627,7 +635,10 @@
                 </svg>`,
                 refresh: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                </svg>`
+                </svg>`,
+                microphone: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                </svg>`,
             };
         }
 
@@ -655,6 +666,9 @@
                             <span>${this.config.title}</span>
                         </div>
                         <div>
+                            <button class="microphone-button" id="microphone-chat">
+                                ${icons.microphone}
+                            </button>
                             <button class="refresh-button" id="refresh-chat" ${!this.thread_id ? 'disabled' : ''}>
                                 ${icons.refresh}
                             </button>
@@ -847,6 +861,51 @@
                                 this.sendMessage();
                             });
                         });
+                    }
+                });
+            }
+
+            const micButton = document.getElementById('microphone-chat');
+            let vapi = null;
+            if (micButton) {
+                micButton.addEventListener('click', () => {
+                    // Toggle active state of mic button
+                    micButton.classList.toggle('active');
+                    
+                    if (micButton.classList.contains('active')) {
+                        // Start recording
+                        console.log("start call");
+                        vapi = new Vapi("e32a8760-015c-4b57-b4e2-ce70a034967f");
+                        console.log("vapi:", vapi);
+                        vapi.start('b67b0be5-fe08-41f8-965a-dd68baf61bb1');
+
+                        vapi.on("error", (e) => {
+                            console.error(e);
+                        });
+
+                        // Various assistant messages can come back (like function calls, transcripts, etc)
+                        vapi.on("message", (message) => {
+                            console.log(message);
+                        });
+
+                        vapi.on("volume-level", (volume) => {
+                            console.log(`Assistant volume level: ${volume}`);
+                        });
+
+                        vapi.on("call-start", () => {
+                            console.log("Call has started.");
+                        });
+
+                        vapi.on("call-end", () => {
+                            console.log("Call has ended.");
+                        });
+                        
+                        
+                    } else {
+                        // Stop recording
+                        // this.stopRecording(); 
+                        console.log("stop call");
+                        vapi.stop();
                     }
                 });
             }

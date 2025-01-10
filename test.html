@@ -71,9 +71,10 @@
                 (w[o].q=w[o].q||[]).push(arguments)};
             js=d.createElement(s),fjs=d.getElementsByTagName(s)[0];
             js.id='chat-widget-script';
+            js.type='module';
             js.src=window.location.hostname === '127.0.0.1' ? 
-                'http://127.0.0.1:5500/chat-widget.js' : 
-                'https://chadwyatt.github.io/chat-widget/chat-widget.js';
+                'http://127.0.0.1:5500/dist/chat-widget.bundle.js' : 
+                'https://chadwyatt.github.io/chat-widget/dist/chat-widget.bundle.js';
             js.async=1;
             fjs.parentNode.insertBefore(js,fjs);
         }(window,document,'script','cw'));
