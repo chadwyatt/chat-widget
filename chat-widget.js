@@ -216,6 +216,7 @@ import Vapi from "@vapi-ai/web";
             border: 1px solid #E9E9EB;
             animation: fadeIn 0.3s ease-in;
             cursor: pointer;
+            color: #000;
         }
 
         .chat-suggestions {
@@ -266,6 +267,7 @@ import Vapi from "@vapi-ai/web";
             font-size: 14px;
             outline: none;
             transition: border-color 0.2s;
+            color: #000;
         }
 
         .chat-input:focus {
@@ -536,12 +538,25 @@ import Vapi from "@vapi-ai/web";
         async init(config) {
             const pageUrl = window.location;
             
+            // Determine endpoint based on hostname and engine parameter
+            let endpoint;
+            if (config.engine === "aiedge") {
+                if (pageUrl.hostname === "localhost" || pageUrl.hostname === "127.0.0.1") {
+                    endpoint = "http://127.0.0.1:54321/functions/v1/chat-engine";
+                    // endpoint = "https://eizonajpuakfqdkjfzvn.supabase.co/functions/v1/chat-engine";
+                } else {
+                    endpoint = "https://eizonajpuakfqdkjfzvn.supabase.co/functions/v1/chat-engine";
+                }
+            } else {
+                endpoint = "https://webhook.latenode.com/18553/prod/ff64a84e-2390-4636-8733-bdebd13b309d";
+            }
+            
             config = {
                 ...config,
                 url: pageUrl.href,
                 domain: pageUrl.hostname,
                 pathname: pageUrl.pathname,
-                endpoint: "https://webhook.latenode.com/18553/prod/ff64a84e-2390-4636-8733-bdebd13b309d"
+                endpoint: endpoint
             };
             await this.getConfig(config);
             
@@ -591,7 +606,8 @@ import Vapi from "@vapi-ai/web";
                     action: 'get_config',
                     url: config.url,
                     domain: config.domain,
-                    pathname: config.pathname
+                    pathname: config.pathname,
+                    thread_id: localStorage.getItem('chat_thread_id') || null
                 })
             });
 
@@ -602,8 +618,8 @@ import Vapi from "@vapi-ai/web";
                 endpoint: config.endpoint,
                 title: config.title || 'Chat Support',
                 mode: config.mode || 'popup',
-                suggestions: config.suggestions.split("\n") || [],
-                prompt: config.prompt || 'How can we help you today?',
+                suggestions: config.suggestions ? config.suggestions.split("\n") : [],
+                prompt: config.hello_prompt || 'How can we help you today?',
                 icon: config.icon || null,
                 darkMode: config.dark_mode == 'true' || false,
                 key: config.key || null,
@@ -1035,7 +1051,8 @@ import Vapi from "@vapi-ai/web";
                         thread_id: this.thread_id,
                         action: 'send_message',
                         key: this.config.key,
-                        user_id: this.config.user_id
+                        user_id: this.config.user_id,
+                        url: window.location.href
                     })
                 });
 
@@ -1151,7 +1168,6 @@ import Vapi from "@vapi-ai/web";
                 });
 
                 const data = await response.json();
-                console.log("data:", data);
                 if (data.data) {
                     // Store messages in messageHistory
                     this.messageHistory = data.data;
@@ -1185,7 +1201,7 @@ import Vapi from "@vapi-ai/web";
 
                 // Add each message to the chat
                 this.messageHistory.forEach(msg => {
-                    this.addMessage(msg.content[0].text.value, msg.role === 'user' ? 'user' : 'bot');
+                    this.addMessage(msg.content || msg.content[0].text.value, msg.role === 'user' ? 'user' : 'bot');
                 });
                 // Clear the message history after loading
                 this.messageHistory = null;
