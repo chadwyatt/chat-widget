@@ -528,6 +528,109 @@ import Vapi from "@vapi-ai/web";
         .dark-mode .chat-powered-by {
             color: #999;
         }
+
+        .file-upload-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            width: 32px;
+        }
+
+        .file-upload-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .dark-mode .file-upload-button {
+            color: #fff;
+        }
+
+        .dark-mode .file-upload-button:hover {
+            background-color: #3d3d3d;
+        }
+
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin: 8px;
+        }
+
+        .dark-mode .file-preview {
+            background: #2c2c2e;
+        }
+
+        .file-preview img {
+            max-width: 50px;
+            max-height: 50px;
+            border-radius: 4px;
+        }
+
+        .file-preview .file-info {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .file-preview .file-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .file-preview .file-size {
+            color: #666;
+        }
+
+        .dark-mode .file-preview .file-size {
+            color: #999;
+        }
+
+        .file-preview .delete-file {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .file-preview .delete-file:hover {
+            background-color: #e0e0e0;
+        }
+
+        .dark-mode .file-preview .delete-file:hover {
+            background-color: #3d3d3d;
+        }
+
+        .file-upload-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+        }
+
+        .file-upload-loading .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     `;
 
     class ChatWidget {
@@ -657,6 +760,9 @@ import Vapi from "@vapi-ai/web";
                 microphone: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
                 </svg>`,
+                attachment: `<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                </svg>`
             };
         }
 
@@ -705,6 +811,10 @@ import Vapi from "@vapi-ai/web";
                     ` : ''}
                     <div id="chat-messages" class="chat-messages"></div>
                     <div class="chat-input-container">
+                        <input type="file" id="file-upload" style="display: none">
+                        <button class="file-upload-button" id="file-upload-button">
+                            ${icons.attachment}
+                        </button>
                         <input type="text" id="chat-input" class="chat-input" placeholder="Type your message...">
                         <button id="send-button" class="send-button">Send</button>
                     </div>
@@ -1019,22 +1129,31 @@ import Vapi from "@vapi-ai/web";
                     }
                 });
             }
+
+            // Add file upload button handler
+            const fileUploadButton = document.getElementById('file-upload-button');
+            const fileInput = document.getElementById('file-upload');
+
+            fileUploadButton.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleFileUpload(file);
+                }
+            });
         }
 
         async sendMessage() {
             const message = this.elements.input.value.trim();
-            if (!message) return;
+            if (!message && !this.attachedFile) return;
 
             // Add user message to chat
             this.addMessage(message, 'user');
             this.elements.input.value = '';
             this.elements.sendButton.disabled = true;
-
-            // Clear suggestions
-            const suggestionsContainer = document.querySelector('.chat-suggestions');
-            const suggestionsTitle = document.querySelector('.suggestions-title');
-            if (suggestionsContainer) suggestionsContainer.remove();
-            if (suggestionsTitle) suggestionsTitle.remove();
 
             // Show typing indicator
             this.showTypingIndicator();
@@ -1043,16 +1162,16 @@ import Vapi from "@vapi-ai/web";
                 const response = await fetch(this.config.endpoint, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         message,
+                        file_id: this.attachedFile?.id,
                         assistant_id: this.config.assistant_id,
                         thread_id: this.thread_id,
                         action: 'send_message',
                         key: this.config.key,
-                        user_id: this.config.user_id,
-                        url: window.location.href
+                        user_id: this.config.user_id
                     })
                 });
 
@@ -1060,13 +1179,14 @@ import Vapi from "@vapi-ai/web";
                 this.removeTypingIndicator();
                 this.thread_id = data.thread_id;
                 localStorage.setItem('chat_thread_id', data.thread_id);
-                
-                // Update refresh button state
-                const refreshButton = document.getElementById('refresh-chat');
-                if (refreshButton) {
-                    refreshButton.disabled = false;
+
+                // Clear file attachment after sending
+                if (this.attachedFile) {
+                    const preview = document.querySelector('.file-preview');
+                    if (preview) preview.remove();
+                    this.attachedFile = null;
                 }
-                
+
                 this.addMessage(data.response, 'bot');
             } catch (error) {
                 this.removeTypingIndicator();
@@ -1206,6 +1326,103 @@ import Vapi from "@vapi-ai/web";
                 // Clear the message history after loading
                 this.messageHistory = null;
             }
+        }
+
+        async handleFileUpload(file) {
+            // Create FormData
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('action', 'upload_file');
+            formData.append('key', this.config.key);
+
+            // Show loading state
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'file-upload-loading';
+            loadingDiv.innerHTML = '<div class="spinner"></div>';
+            this.elements.messages.appendChild(loadingDiv);
+
+            try {
+                const response = await fetch(this.config.endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                loadingDiv.remove();
+
+                if (data.success) {
+                    this.attachedFile = {
+                        id: data.file_id,
+                        name: file.name,
+                        size: this.formatFileSize(file.size),
+                        type: file.type
+                    };
+                    this.showFilePreview();
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                loadingDiv.remove();
+                console.error('Error uploading file:', error);
+                this.addMessage('Sorry, there was an error uploading the file.', 'bot');
+            }
+        }
+
+        async deleteFile() {
+            if (!this.attachedFile) return;
+
+            try {
+                await fetch(this.config.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'delete_file',
+                        file_id: this.attachedFile.id,
+                        key: this.config.key
+                    })
+                });
+            } catch (error) {
+                console.error('Error deleting file:', error);
+            }
+
+            this.attachedFile = null;
+            const preview = document.querySelector('.file-preview');
+            if (preview) preview.remove();
+        }
+
+        showFilePreview() {
+            const preview = document.createElement('div');
+            preview.className = 'file-preview';
+
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+            fileInfo.innerHTML = `
+                <div class="file-name">${this.attachedFile.name}</div>
+                <div class="file-size">${this.attachedFile.size}</div>
+            `;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-file';
+            deleteButton.innerHTML = '×';
+            deleteButton.onclick = () => this.deleteFile();
+
+            preview.appendChild(fileInfo);
+            preview.appendChild(deleteButton);
+
+            const existingPreview = document.querySelector('.file-preview');
+            if (existingPreview) existingPreview.remove();
+            
+            this.elements.messages.appendChild(preview);
+        }
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
     }
 
